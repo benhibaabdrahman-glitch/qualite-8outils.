@@ -13,7 +13,6 @@
       --muted: #94a3b8;
       --accent: #38bdf8;
       --accent-2: #22c55e;
-      --warn: #f59e0b;
       --danger: #ef4444;
       --border: rgba(148, 163, 184, 0.2);
     }
@@ -63,7 +62,7 @@
     }
     .grid {
       display: grid;
-      grid-template-columns: 1.35fr 1fr;
+      grid-template-columns: 1fr 1.35fr;
       gap: 16px;
     }
     @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
@@ -144,6 +143,14 @@
 
     <div class="grid" id="mainWorkspace">
       <div class="card">
+        <div class="mode-switch">
+          <button id="tabSummary" class="active" onclick="setMode('summary')">📘 الشرح العام</button>
+          <button id="tabDrawing" onclick="setMode('drawing')">✏️ كيفية الرسم</button>
+        </div>
+        <div class="info-box" id="infoPanel"></div>
+      </div>
+
+      <div class="card">
         <canvas id="sceneCanvas" width="760" height="420"></canvas>
         <div class="controls">
           <button onclick="prevStep()">⏮ السابق</button>
@@ -152,14 +159,6 @@
           <button onclick="restartAnim()">🔄 إعادة العرض</button>
         </div>
         <div class="status-note" id="speechStatus">ملاحظة: اضغط على "قراءة صوتية" لسماع النص باللغة العربية الفصحى.</div>
-      </div>
-
-      <div class="card">
-        <div class="mode-switch">
-          <button id="tabSummary" class="active" onclick="setMode('summary')">📘 الشرح العام</button>
-          <button id="tabDrawing" onclick="setMode('drawing')">✏️ كيفية الرسم</button>
-        </div>
-        <div class="info-box" id="infoPanel"></div>
       </div>
     </div>
 
@@ -296,25 +295,23 @@
     function renderInfo() {
       const tool = TOOLS[currentToolIdx];
       const panel = document.getElementById("infoPanel");
-      const stepLabel = `الخطوة ${currentStep + 1} من ${tool.steps.length}: ${tool.steps[currentStep]}`;
+      const stepLabel = "الخطوة " + (currentStep + 1) + " من " + tool.steps.length + ": " + tool.steps[currentStep];
 
       if (mode === "summary") {
-        panel.innerHTML = `
-          <div class="step-badge">${stepLabel}</div>
-          <h2>${tool.name}</h2>
-          <p>${tool.summary}</p>
-          <ul class="steps-list">
-            ${tool.steps.map((s, i) => `<li>${i === currentStep ? "<strong>▶ " + s + "</strong>" : s}</li>`).join("")}
-          </ul>
-        `;
+        panel.innerHTML =
+          '<div class="step-badge">' + stepLabel + '</div>' +
+          '<h2>' + tool.name + '</h2>' +
+          '<p>' + tool.summary + '</p>' +
+          '<ul class="steps-list">' +
+          tool.steps.map((s, i) => '<li>' + (i === currentStep ? '<strong>▶ ' + s + '</strong>' : s) + '</li>').join("") +
+          '</ul>';
       } else {
-        panel.innerHTML = `
-          <div class="step-badge">${stepLabel}</div>
-          <h2>كيفية رسم: ${tool.name}</h2>
-          <ol class="steps-list">
-            ${tool.drawing.map(d => `<li>${d}</li>`).join("")}
-          </ol>
-        `;
+        panel.innerHTML =
+          '<div class="step-badge">' + stepLabel + '</div>' +
+          '<h2>كيفية رسم: ' + tool.name + '</h2>' +
+          '<ol class="steps-list">' +
+          tool.drawing.map(d => '<li>' + d + '</li>').join("") +
+          '</ol>';
       }
     }
 
@@ -423,7 +420,7 @@
         const branches = ["الآلة", "المادة", "اليد العاملة", "الطريقة"];
         branches.forEach((b, i) => {
           const top = i < 2;
-          const bx = top ? 460 - (i % 2) * 160 : 460 - (i % 2) * 160;
+          const bx = 460 - (i % 2) * 160;
           const by = top ? 115 : 325;
           ctx.strokeStyle = "#f59e0b";
           ctx.lineWidth = 2.5;
@@ -432,4 +429,139 @@
           ctx.lineTo(bx - 55, by);
           ctx.stroke();
           ctx.fillStyle = "#fbbf24";
-          ctx.fillText(b, bx - 60, top
+          ctx.fillText(b, bx - 60, top ? by - 10 : by + 20);
+        });
+      } else if (tool.id === "pareto") {
+        const vals = [85, 55, 28, 15, 10];
+        const labels = ["عيب 1", "عيب 2", "عيب 3", "عيب 4", "عيب 5"];
+        const baseX = 630;
+        const baseY = 340;
+        vals.forEach((v, i) => {
+          const h = v * 2.1;
+          const x = baseX - i * 115;
+          ctx.fillStyle = i < 2 ? "#38bdf8" : "#475569";
+          ctx.fillRect(x - 55, baseY - h, 55, h);
+          ctx.fillStyle = "#e2e8f0";
+          ctx.font = "13px Tahoma, Arial";
+          ctx.textAlign = "center";
+          ctx.fillText(labels[i], x - 27, baseY + 20);
+        });
+      } else if (tool.id === "five_whys") {
+        for (let i = 0; i < 4; i++) {
+          const y = 85 + i * 72;
+          const highlight = i === currentStep;
+          ctx.fillStyle = highlight ? "rgba(56,189,248,0.22)" : "#1e293b";
+          ctx.strokeStyle = highlight ? "#38bdf8" : "#475569";
+          ctx.lineWidth = 2;
+          ctx.fillRect(110, y, 540, 48);
+          ctx.strokeRect(110, y, 540, 48);
+          ctx.fillStyle = "#f8fafc";
+          ctx.font = "14px Tahoma, Arial";
+          ctx.textAlign = "right";
+          ctx.fillText("لماذا رقم " + (i + 1) + "؟ — تتبع السبب الجذري للخطوة السابقة", 630, y + 29);
+        }
+      } else if (tool.id === "pdca") {
+        const cx = 380;
+        const cy = 225;
+        const r = 115;
+        const quads = [
+          { label: "PLAN", start: -Math.PI / 2, color: "#38bdf8" },
+          { label: "DO", start: 0, color: "#22c55e" },
+          { label: "CHECK", start: Math.PI / 2, color: "#f59e0b" },
+          { label: "ACT", start: Math.PI, color: "#a78bfa" }
+        ];
+        quads.forEach((q) => {
+          ctx.fillStyle = q.color;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.arc(cx, cy, r, q.start, q.start + Math.PI / 2);
+          ctx.closePath();
+          ctx.fill();
+
+          const angle = q.start + Math.PI / 4 + t * 0.25;
+          const lx = cx + Math.cos(angle) * 68;
+          const ly = cy + Math.sin(angle) * 68;
+          ctx.fillStyle = "#06101e";
+          ctx.font = "bold 14px Tahoma, Arial";
+          ctx.textAlign = "center";
+          ctx.fillText(q.label, lx, ly + 4);
+        });
+      }
+    }
+
+    function loop(now) {
+      const t = now / 1000;
+      if (playing) {
+        animProgress += 0.004;
+        if (animProgress >= 1) {
+          animProgress = 0;
+          currentStep = (currentStep + 1) % TOOLS[currentToolIdx].steps.length;
+          renderInfo();
+        }
+      }
+      drawScene(t);
+      requestAnimationFrame(loop);
+    }
+
+    function speakCurrent() {
+      stopSpeech();
+      if (!("speechSynthesis" in window)) {
+        document.getElementById("speechStatus").textContent = "المتصفح الحالي لا يدعم القراءة الصوتية المباشرة، لكن النص والرسوم جاهزان.";
+        return;
+      }
+      const tool = TOOLS[currentToolIdx];
+      const textToRead = mode === "summary"
+        ? tool.name + ". " + tool.summary
+        : "كيفية رسم " + tool.name + ". " + tool.drawing.join(" ");
+      const utter = new SpeechSynthesisUtterance(textToRead);
+      utter.lang = "ar-SA";
+      utter.rate = 0.98;
+      window.speechSynthesis.speak(utter);
+      document.getElementById("speechStatus").textContent = "جاري قراءة النص باللغة العربية...";
+    }
+
+    function stopSpeech() {
+      if ("speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+    }
+
+    function toggleQuiz() {
+      const card = document.getElementById("quizCard");
+      const visible = card.style.display !== "none";
+      card.style.display = visible ? "none" : "block";
+      if (!visible) renderQuiz();
+    }
+
+    function renderQuiz() {
+      const container = document.getElementById("quizContainer");
+      container.innerHTML = "";
+      QUIZ.forEach((item, qIdx) => {
+        const box = document.createElement("div");
+        box.style.marginBottom = "16px";
+        box.innerHTML = "<p><strong>" + (qIdx + 1) + ". " + item.q + "</strong></p>";
+        item.options.forEach((opt, oIdx) => {
+          const btn = document.createElement("button");
+          btn.className = "option-btn";
+          btn.textContent = opt;
+          btn.onclick = () => {
+            box.querySelectorAll(".option-btn").forEach(b => b.disabled = true);
+            if (oIdx === item.answer) {
+              btn.classList.add("correct");
+            } else {
+              btn.classList.add("wrong");
+              box.querySelectorAll(".option-btn")[item.answer].classList.add("correct");
+            }
+          };
+          box.appendChild(btn);
+        });
+        container.appendChild(box);
+      });
+    }
+
+    renderTabs();
+    renderInfo();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
