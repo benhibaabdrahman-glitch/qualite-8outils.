@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>مختبر الجودة الصناعية — شرح مرئي وكيفية الرسم</title>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --panel: #111827;
+      --panel-2: #1e293b;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-2: #22c55e;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --border: rgba(148, 163, 184, 0.2);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+      padding: 16px;
+    }
+    .container { max-width: 1120px; margin: 0 auto; }
+    header {
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    header h1 { font-size: 1.45rem; color: var(--accent); }
+    header p { color: var(--muted); font-size: 0.95rem; }
+    .top-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    button {
+      background: var(--panel-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 9px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 0.92rem;
+      font-weight: 600;
+      transition: 0.2s ease;
+    }
+    button:hover { border-color: var(--accent); transform: translateY(-1px); }
+    button.active { background: var(--accent); color: #062033; border-color: var(--accent); }
+    button.success { background: var(--accent-2); color: #052e16; border-color: var(--accent-2); }
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1.35fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+    }
+    canvas {
+      width: 100%;
+      height: 360px;
+      background: #070c16;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      display: block;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+      align-items: center;
+    }
+    .mode-switch {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .info-box {
+      background: #0b1324;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      min-height: 250px;
+    }
+    .info-box h2 { color: var(--accent); font-size: 1.2rem; margin-bottom: 8px; }
+    .step-badge {
+      display: inline-block;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      margin-bottom: 10px;
+    }
+    .steps-list { margin-top: 10px; padding-right: 18px; color: #e2e8f0; }
+    .steps-list li { margin-bottom: 6px; }
+    .quiz-section { margin-top: 18px; }
+    .option-btn {
+      display: block;
+      width: 100%;
+      text-align: right;
+      margin-top: 8px;
+      background: var(--panel-2);
+    }
+    .option-btn.correct { background: rgba(34, 197, 94, 0.25); border-color: var(--accent-2); }
+    .option-btn.wrong { background: rgba(239, 68, 68, 0.25); border-color: var(--danger); }
+    .status-note { margin-top: 10px; font-size: 0.88rem; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>مختبر أدوات الجودة الصناعية</h1>
+        <p>شرح مرئي متحرك وكيفية الرسم خطوة بخطوة (GANTT، PERT، Ishikawa، Pareto، 5 Why، PDCA)</p>
+      </div>
+      <div class="top-actions">
+        <button id="speakBtn" onclick="speakCurrent()">🔊 قراءة صوتية</button>
+        <button onclick="stopSpeech()">⏹ إيقاف الصوت</button>
+        <button id="toggleQuizBtn" class="success" onclick="toggleQuiz()">📝 اختبار سريع</button>
+      </div>
+    </header>
+
+    <div class="tabs" id="toolTabs"></div>
+
+    <div class="grid" id="mainWorkspace">
+      <div class="card">
+        <canvas id="sceneCanvas" width="760" height="420"></canvas>
+        <div class="controls">
+          <button onclick="prevStep()">⏮ السابق</button>
+          <button id="playPauseBtn" onclick="togglePlay()">⏸ إيقاف مؤقت</button>
+          <button onclick="nextStep()">⏭ التالي</button>
+          <button onclick="restartAnim()">🔄 إعادة العرض</button>
+        </div>
+        <div class="status-note" id="speechStatus">ملاحظة: اضغط على "قراءة صوتية" لسماع النص باللغة العربية الفصحى.</div>
+      </div>
+
+      <div class="card">
+        <div class="mode-switch">
+          <button id="tabSummary" class="active" onclick="setMode('summary')">📘 الشرح العام</button>
+          <button id="tabDrawing" onclick="setMode('drawing')">✏️ كيفية الرسم</button>
+        </div>
+        <div class="info-box" id="infoPanel"></div>
+      </div>
+    </div>
+
+    <div class="card quiz-section" id="quizCard" style="display:none;">
+      <h2 style="color:var(--accent); margin-bottom:10px;">اختبار تقييمي سريع</h2>
+      <div id="quizContainer"></div>
+    </div>
+  </div>
+
+  <script>
+    const TOOLS = [
+      {
+        id: "gantt",
+        name: "مخطط غانت (GANTT)",
+        summary: "أداة جدولة زمنية توضح المهام والمدة الزمنية لكل نشاط وتداخل المراحل على محور أفقي يمثل الزمن.",
+        drawing: [
+          "ارسم محوراً أفقياً يمثل الزمن (أيام أو أسابيع) ومحور عمودياً يضم قائمة المهام.",
+          "خصص لكل مهمة شريطاً أفقياً يبدأ من تاريخ انطلاقها وينتهي عند تاريخ نهايتها.",
+          "لوّن المهام المنجزة أو الحرجة بلون مميز لتسهيل تتبع التقدم واكتشاف التأخر."
+        ],
+        steps: ["تحديد المهام والمدد", "رسم محور الزمن", "تمثيل أشرطة المهام", "متابعة نسبة الإنجاز"]
+      },
+      {
+        id: "pert",
+        name: "شبكة بيرت (PERT)",
+        summary: "أداة تخطيط شبكي تعتمد على العقد والأسهم لتحديد التسلسل المنطقي للعمليات واكتشاف المسار الحرج.",
+        drawing: [
+          "مثل كل مرحلة أو حدث بدائرة أو عقدة مرقمة متسلسلة من البداية إلى النهاية.",
+          "صل بين العقد بأسهم تمثل الأنشطة واكتب فوق كل سهم المدة الزمنية المقدرة.",
+          "احسب أطول مسار من البداية إلى النهاية لتحديد المسار الحرج الذي لا يحتمل التأخير."
+        ],
+        steps: ["تحديد الأحداث والعقد", "ربط الأنشطة بالأسهم", "إدراج المدد الزمنية", "إبراز المسار الحرج"]
+      },
+      {
+        id: "ishikawa",
+        name: "إيشيكاوا / عظمة السمكة",
+        summary: "أداة لتحليل الأسباب الجذرية للمشكلة عبر تصنيفها ضمن محاور رئيسية مثل 5M (اليد العاملة، الآلة، المادة، الطريقة، المحيط).",
+        drawing: [
+          "ارسم سهماً أفقياً كبيراً يتجه نحو اليمين يمثل المشكلة أو العيب المراد تحليله.",
+          "ارسم خطوطاً مائلة متفرعة كأشواك السمكة تمثل الفئات الرئيسية للأسباب.",
+          "أضف فروعاً ثانوية صغيرة لكل سبب فرعي للوصول إلى السبب الجذري الحقيقي."
+        ],
+        steps: ["كتابة المشكلة في الرأس", "رسم العمود الفقري", "إضافة محاور الأسباب 5M", "تفريع الأسباب الثانوية"]
+      },
+      {
+        id: "pareto",
+        name: "مخطط باريتو (80/20)",
+        summary: "مخطط يرتب المشاكل أو العيوب تنازلياً حسب التكرار أو التكلفة لإبراز أن قلة من الأسباب تسبب أغلب التأثير.",
+        drawing: [
+          "رتب فئات المشاكل تنازلياً من الأكثر تكراراً أو تكلفة إلى الأقل على المحور الأفقي.",
+          "ارسم أعمدة رأسية لكل فئة، ثم أضف منحنى تراكمياً يوضح النسبة المئوية التراكمية.",
+          "حدد خط 80% لتحديد الأسباب ذات الأولوية القصوى في المعالجة."
+        ],
+        steps: ["ترتيب العيوب تنازلياً", "رسم الأعمدة التكرارية", "إضافة المنحنى التراكمي", "تحديد أولوية 80%"]
+      },
+      {
+        id: "five_whys",
+        name: "لماذا الخمس (5 Why)",
+        summary: "منهجية بسيطة تعتمد على طرح سؤال لماذا بشكل متكرر للانتقال من العرض الظاهري إلى السبب الجذري.",
+        drawing: [
+          "اكتب المشكلة الظاهرة في أعلى الصفحة أو في الإطار الأول.",
+          "اطرح السؤال الأول: لماذا حدث ذلك؟ واكتب الإجابة في مربع يليها.",
+          "كرر السؤال على كل إجابة جديدة حتى تصل إلى خلل جذري في النظام أو الإجراء."
+        ],
+        steps: ["توصيف المشكلة الأولية", "سؤال لماذا وتدوين السبب", "تعميق الاستفسار خطوة بخطوة", "بلوغ السبب الجذري"]
+      },
+      {
+        id: "pdca",
+        name: "دورة PDCA (ديمينغ)",
+        summary: "حلقة مستمرة للتحسين المستمر تقوم على أربع مراحل: خطط (Plan)، نفّذ (Do)، تحقق (Check)، صحّح (Act).",
+        drawing: [
+          "ارسم دائرة مقسمة إلى أربعة أرباع متصلة في اتجاه عقارب الساعة.",
+          "سمِّ الأرباع الأربعة بالترتيب: Plan ثم Do ثم Check ثم Act.",
+          "ضع سهماً دائرياً يربط Act بـ Plan للدلالة على أن التحسين عملية مستمرة."
+        ],
+        steps: ["Plan: التخطيط وتحديد الهدف", "Do: التنفيذ التجريبي", "Check: قياس ومقارنة النتائج", "Act: التعميم أو التصحيح"]
+      }
+    ];
+
+    const QUIZ = [
+      {
+        q: "أي أداة تُستخدم لتحديد المسار الحرج وتسلسل الأنشطة اعتماداً على العقد والأسهم؟",
+        options: ["مخطط غانت (GANTT)", "شبكة بيرت (PERT)", "دورة PDCA"],
+        answer: 1
+      },
+      {
+        q: "ما هو المبدأ الأساسي الذي يرتكز عليه مخطط باريتو في ترتيب الأولويات؟",
+        options: ["قاعدة 80/20", "العد التنازلي الزمني", "الاختبار العشوائي"],
+        answer: 0
+      },
+      {
+        q: "ماذا يرمز الحرف C في دورة التحسين المستمر PDCA؟",
+        options: ["Control / Check", "Create", "Calculate"],
+        answer: 0
+      }
+    ];
+
+    let currentToolIdx = 0;
+    let currentStep = 0;
+    let mode = "summary";
+    let playing = true;
+    let animProgress = 0;
+
+    const canvas = document.getElementById("sceneCanvas");
+    const ctx = canvas.getContext("2d");
+
+    function renderTabs() {
+      const tabsEl = document.getElementById("toolTabs");
+      tabsEl.innerHTML = "";
+      TOOLS.forEach((tool, idx) => {
+        const btn = document.createElement("button");
+        btn.textContent = tool.name;
+        if (idx === currentToolIdx) btn.classList.add("active");
+        btn.onclick = () => {
+          currentToolIdx = idx;
+          currentStep = 0;
+          animProgress = 0;
+          playing = true;
+          document.getElementById("playPauseBtn").textContent = "⏸ إيقاف مؤقت";
+          renderTabs();
+          renderInfo();
+        };
+        tabsEl.appendChild(btn);
+      });
+    }
+
+    function setMode(newMode) {
+      mode = newMode;
+      document.getElementById("tabSummary").classList.toggle("active", mode === "summary");
+      document.getElementById("tabDrawing").classList.toggle("active", mode === "drawing");
+      renderInfo();
+    }
+
+    function renderInfo() {
+      const tool = TOOLS[currentToolIdx];
+      const panel = document.getElementById("infoPanel");
+      const stepLabel = `الخطوة ${currentStep + 1} من ${tool.steps.length}: ${tool.steps[currentStep]}`;
+
+      if (mode === "summary") {
+        panel.innerHTML = `
+          <div class="step-badge">${stepLabel}</div>
+          <h2>${tool.name}</h2>
+          <p>${tool.summary}</p>
+          <ul class="steps-list">
+            ${tool.steps.map((s, i) => `<li>${i === currentStep ? "<strong>▶ " + s + "</strong>" : s}</li>`).join("")}
+          </ul>
+        `;
+      } else {
+        panel.innerHTML = `
+          <div class="step-badge">${stepLabel}</div>
+          <h2>كيفية رسم: ${tool.name}</h2>
+          <ol class="steps-list">
+            ${tool.drawing.map(d => `<li>${d}</li>`).join("")}
+          </ol>
+        `;
+      }
+    }
+
+    function nextStep() {
+      const tool = TOOLS[currentToolIdx];
+      currentStep = (currentStep + 1) % tool.steps.length;
+      animProgress = 0.25 * (currentStep + 1);
+      renderInfo();
+    }
+
+    function prevStep() {
+      const tool = TOOLS[currentToolIdx];
+      currentStep = (currentStep - 1 + tool.steps.length) % tool.steps.length;
+      animProgress = 0.25 * (currentStep + 1);
+      renderInfo();
+    }
+
+    function restartAnim() {
+      currentStep = 0;
+      animProgress = 0;
+      playing = true;
+      document.getElementById("playPauseBtn").textContent = "⏸ إيقاف مؤقت";
+      renderInfo();
+    }
+
+    function togglePlay() {
+      playing = !playing;
+      document.getElementById("playPauseBtn").textContent = playing ? "⏸ إيقاف مؤقت" : "▶ متابعة";
+    }
+
+    function drawScene(t) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const tool = TOOLS[currentToolIdx];
+
+      ctx.fillStyle = "#38bdf8";
+      ctx.font = "bold 20px Tahoma, Arial";
+      ctx.textAlign = "right";
+      ctx.fillText(tool.name + " — " + tool.steps[currentStep], canvas.width - 24, 36);
+
+      ctx.strokeStyle = "rgba(148,163,184,0.25)";
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(24, 54, canvas.width - 48, canvas.height - 80);
+
+      if (tool.id === "gantt") {
+        const tasks = ["دراسة المتطلبات", "التصميم الفني", "التنفيذ العملي", "المراجعة والاختبار"];
+        const colors = ["#38bdf8", "#22c55e", "#f59e0b", "#a78bfa"];
+        tasks.forEach((label, idx) => {
+          const y = 95 + idx * 72;
+          ctx.fillStyle = "#e2e8f0";
+          ctx.font = "15px Tahoma, Arial";
+          ctx.fillText(label, canvas.width - 45, y + 18);
+
+          const barMaxW = 360;
+          const startX = 110 + idx * 45;
+          const pulse = 0.75 + 0.25 * Math.sin(t * 2 + idx);
+          const w = Math.min(barMaxW, (barMaxW * ((currentStep + 1) / 4)) * pulse);
+          ctx.fillStyle = colors[idx];
+          ctx.fillRect(startX, y, w, 28);
+        });
+      } else if (tool.id === "pert") {
+        const nodes = [
+          { x: 630, y: 210, label: "البداية" },
+          { x: 460, y: 130, label: "مهمة A" },
+          { x: 460, y: 290, label: "مهمة B" },
+          { x: 280, y: 210, label: "تجميع" },
+          { x: 120, y: 210, label: "النهاية" }
+        ];
+        const edges = [[0, 1], [0, 2], [1, 3], [2, 3], [3, 4]];
+        edges.forEach(([a, b], i) => {
+          ctx.strokeStyle = i === 0 || i === 2 || i === 4 ? "#22c55e" : "#94a3b8";
+          ctx.lineWidth = i === 0 || i === 2 || i === 4 ? 3.5 : 2;
+          ctx.beginPath();
+          ctx.moveTo(nodes[a].x - 32, nodes[a].y);
+          ctx.lineTo(nodes[b].x + 32, nodes[b].y);
+          ctx.stroke();
+        });
+        nodes.forEach((n, idx) => {
+          const active = idx <= currentStep + 1;
+          ctx.fillStyle = active ? "#0284c7" : "#1e293b";
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, 32, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = "#38bdf8";
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          ctx.fillStyle = "#fff";
+          ctx.font = "bold 13px Tahoma, Arial";
+          ctx.textAlign = "center";
+          ctx.fillText(n.label, n.x, n.y + 5);
+        });
+      } else if (tool.id === "ishikawa") {
+        ctx.strokeStyle = "#38bdf8";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(140, 220);
+        ctx.lineTo(560, 220);
+        ctx.stroke();
+
+        ctx.fillStyle = "#ef4444";
+        ctx.fillRect(560, 185, 150, 70);
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 15px Tahoma, Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("المشكلة / العيب", 635, 225);
+
+        const branches = ["الآلة", "المادة", "اليد العاملة", "الطريقة"];
+        branches.forEach((b, i) => {
+          const top = i < 2;
+          const bx = top ? 460 - (i % 2) * 160 : 460 - (i % 2) * 160;
+          const by = top ? 115 : 325;
+          ctx.strokeStyle = "#f59e0b";
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.moveTo(bx, 220);
+          ctx.lineTo(bx - 55, by);
+          ctx.stroke();
+          ctx.fillStyle = "#fbbf24";
+          ctx.fillText(b, bx - 60, top
